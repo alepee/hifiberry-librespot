@@ -15,10 +15,16 @@ hifiberry-librespot (0.8.0.13) stable; urgency=medium
     start-squeezelite already use -- ~/.librespot under a user service,
     /var/lib/librespot otherwise, which is also where spotify-event.sh
     looks. SYSTEM_CACHE overrides the path, or disables persistence when set
-    to an empty value. It is created 0700, since librespot writes
-    credentials.json without a mode of its own. A directory that cannot be
-    created warns rather than fails: a player that starts without
-    persistence is better than one that does not start.
+    to an empty value. Its mode is set to 0700 on every start, not only when
+    the directory is created, since librespot writes credentials.json
+    without a mode of its own and the directory is the only thing keeping it
+    off other local accounts. On a device upgraded from 0.7.1.1 or earlier
+    /var/lib/librespot already exists, created 0775 librespot:audio by the
+    postinst of the day for the event pipe, so a mode applied only at
+    creation would never reach it. A directory that cannot be created or
+    secured warns and persistence is skipped: a player that starts without
+    persistence is better than one that does not start, and credentials do
+    not belong in a directory whose mode could not be set.
   * start-librespot: as a side effect librespot now also restores its cached
     volume at startup, but only when it falls back to softvol. With the ALSA
     mixer, which is the nominal path here, the cached volume is ignored and

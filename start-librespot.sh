@@ -11,7 +11,8 @@
 #           credentials received over zeroconf only ever live in memory, so a
 #           restarted player cannot reconnect on its own. Per-user
 #           (~/.librespot) or /var/lib/librespot, the same split raat and
-#           squeezelite use.
+#           squeezelite use. The directory is forced to 0700 on every start,
+#           and persistence is skipped when it cannot be created or secured.
 # - v1.1.2: Added VOLUME_CTRL environment knob to select librespot's volume curve
 #           (linear|log|cubic|fixed). Default remains "linear" (unchanged behaviour);
 #           integrators can override via a systemd drop-in (Environment=VOLUME_CTRL=cubic).
@@ -136,16 +137,23 @@ LIBRESPOT_OPTS=("--name" "$PRETTY_HOSTNAME"
                 "--zeroconf-backend" "$ZEROCONF_BACKEND")  # Explicitly set the zeroconf backend
 
 # Persist credentials, so a restart does not depend on a client pushing them
-# back over zeroconf. Created 0700 explicitly: librespot writes
-# credentials.json without a mode of its own, so the directory is what keeps
-# the credentials off other local accounts.
-# Skipped rather than fatal when the directory cannot be created: a player
-# that starts without persistence is better than one that does not start.
+# back over zeroconf. The directory is what keeps the credentials off other
+# local accounts, since librespot writes credentials.json without a mode of
+# its own, so its mode is set on every start rather than only at creation:
+# mkdir -m applies to a directory it creates and says nothing about one that
+# already exists. /var/lib/librespot does exist on a device upgraded from
+# 0.7.1.1 or earlier, where the postinst created it 0775 librespot:audio for
+# the event pipe.
+# Persistence is skipped rather than fatal when the directory cannot be
+# created or secured: a player that starts without persistence is better than
+# one that does not start, and credentials do not belong in a directory whose
+# mode could not be set -- on that upgraded device the mode belongs to a
+# system user this service no longer runs as.
 if [ -n "$SYSTEM_CACHE" ]; then
-  if mkdir -p -m 700 "$SYSTEM_CACHE" 2>/dev/null; then
+  if mkdir -p "$SYSTEM_CACHE" 2>/dev/null && chmod 700 "$SYSTEM_CACHE" 2>/dev/null; then
     LIBRESPOT_OPTS+=("--system-cache" "$SYSTEM_CACHE")
   else
-    echo "Warning: could not create $SYSTEM_CACHE, starting without credential persistence."
+    echo "Warning: could not create or secure $SYSTEM_CACHE (needs to be a directory owned by $(id -un), mode 0700), starting without credential persistence."
   fi
 fi
 

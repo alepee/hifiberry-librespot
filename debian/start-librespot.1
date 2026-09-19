@@ -34,6 +34,15 @@ otherwise. Set it via a systemd drop-in, e.g.
 .I Environment=SYSTEM_CACHE=/var/lib/hifiberry/librespot ,
 or to an empty value to disable persistence. This is not the audio cache,
 which stays disabled.
+.IP
+The directory holds Spotify credentials, so its mode is set to 0700 on every
+start. If it cannot be created, or its mode cannot be set \(em on a device
+upgraded from 0.7.1.1 or earlier
+.I /var/lib/librespot
+still belongs to the retired
+.B librespot
+system user \(em a warning is logged and the player starts without
+persistence.
 .SH FILES
 .I /etc/hostname
 .RS
