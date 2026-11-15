@@ -35,14 +35,11 @@ otherwise. Set it via a systemd drop-in, e.g.
 or to an empty value to disable persistence. This is not the audio cache,
 which stays disabled.
 .IP
-The directory holds Spotify credentials, so its mode is set to 0700 on every
-start. If it cannot be created, or its mode cannot be set \(em on a device
-upgraded from 0.7.1.1 or earlier
-.I /var/lib/librespot
-still belongs to the retired
-.B librespot
-system user \(em a warning is logged and the player starts without
-persistence.
+librespot creates the directory and writes
+.I credentials.json
+readable by its owner only. A
+.I credentials.json
+written by an older version is set to 0600 on start.
 .IP
 When Spotify explicitly rejects the cached credentials (bad credentials,
 credentials that cannot be validated, or an account without Premium),

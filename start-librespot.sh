@@ -4,8 +4,11 @@
 # This script handles startup of librespot with the system's pretty hostname
 # and auto-configures audio parameters based on the detected sound card
 #
-# Version: 1.1.4
+# Version: 1.1.5
 # Changelog:
+# - v1.1.5: Librespot now handles permissions of credentials file by itself.
+#           Old workaround with mkdir removed. If credentials.json exists, set
+#           it to 0600 to prevent librespot warnings.
 # - v1.1.4: Do not pass the audiocontrol access token when it belongs to a free
 #           Spotify account. librespot exits 1 on one and the unit restarted it
 #           every ten seconds without end. It now starts on discovery and the
@@ -146,25 +149,14 @@ LIBRESPOT_OPTS=("--name" "$PRETTY_HOSTNAME"
                 "--zeroconf-backend" "$ZEROCONF_BACKEND")  # Explicitly set the zeroconf backend
 
 # Persist credentials, so a restart does not depend on a client pushing them
-# back over zeroconf. The directory is what keeps the credentials off other
-# local accounts, since librespot writes credentials.json without a mode of
-# its own, so its mode is set on every start rather than only at creation:
-# mkdir -m applies to a directory it creates and says nothing about one that
-# already exists. /var/lib/librespot does exist on a device upgraded from
-# 0.7.1.1 or earlier, where the postinst created it 0775 librespot:audio for
-# the event pipe.
-# Persistence is skipped rather than fatal when the directory cannot be
-# created or secured: a player that starts without persistence is better than
-# one that does not start, and credentials do not belong in a directory whose
-# mode could not be set -- on that upgraded device the mode belongs to a
-# system user this service no longer runs as.
+# back over zeroconf. librespot creates the directory and writes
+# credentials.json 0600, but a file from an older version is world readable.
 CACHED_CREDENTIALS=""
 if [ -n "$SYSTEM_CACHE" ]; then
-  if mkdir -p "$SYSTEM_CACHE" 2>/dev/null && chmod 700 "$SYSTEM_CACHE" 2>/dev/null; then
-    LIBRESPOT_OPTS+=("--system-cache" "$SYSTEM_CACHE")
-    CACHED_CREDENTIALS="$SYSTEM_CACHE/credentials.json"
-  else
-    echo "Warning: could not create or secure $SYSTEM_CACHE (needs to be a directory owned by $(id -un), mode 0700), starting without credential persistence."
+  LIBRESPOT_OPTS+=("--system-cache" "$SYSTEM_CACHE")
+  CACHED_CREDENTIALS="$SYSTEM_CACHE/credentials.json"
+  if [ -f "$CACHED_CREDENTIALS" ]; then
+    chmod 600 "$CACHED_CREDENTIALS"
   fi
 fi
 
