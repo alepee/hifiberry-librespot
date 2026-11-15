@@ -1,3 +1,9 @@
+hifiberry-librespot (0.8.0.17+git20261107.15e02e8) stable; urgency=medium
+
+  * Updated librespot to dev branch, commit 15e02e86c72d (2026-11-07).
+
+ -- Eugeny Shcheglov <eugenyshcheglov@gmail.com>  Sun, 15 Nov 2026 23:16:02 +0200
+
 hifiberry-librespot (0.8.0.17) stable; urgency=medium
 
   * librespot: play the track picked in a playlist from the Spotify app on
