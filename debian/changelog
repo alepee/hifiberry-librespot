@@ -1,8 +1,33 @@
 hifiberry-librespot (0.8.0.17+git20261107.15e02e8) stable; urgency=medium
 
-  * Updated librespot to dev branch, commit 15e02e86c72d (2026-11-07).
+  [ Eugeny Shcheglov ]
+  * Updated librespot to its dev branch, commit 15e02e86c72d (2026-11-07),
+    which is not released yet. Changes users will notice:
+    - The track picked in a playlist in the Spotify app on Android plays,
+      not the first one (librespot-org/librespot#1795). This was carried
+      as a patch until now.
+    - Spotify Connect tries every address Spotify resolves to, so it falls
+      back to IPv4 when IPv6 is advertised but does not route
+      (librespot-org/librespot#1651). The fallback waits for the TCP
+      timeout first.
+    - The credentials file is written readable by its owner only
+      (librespot-org/librespot#1650).
+    - A track fetch that fails on one CDN tries the next one
+      (librespot-org/librespot#1722).
+    - Discovery retries for a minute instead of a second, and a malformed
+      discovery request no longer crashes the player
+      (librespot-org/librespot#1675, #1702).
+  * start-librespot: librespot now sets the mode of the credentials file
+    itself, so the wrapper no longer forces the directory to 0700. An
+    existing credentials.json from an older version is set to 0600.
 
- -- Eugeny Shcheglov <eugenyshcheglov@gmail.com>  Sun, 15 Nov 2026 23:16:02 +0200
+  [ HiFiBerry ]
+  * start-librespot: when the cache directory belongs to another user, start
+    without credential persistence, as before. On a device upgraded from
+    0.7.1.1 or earlier /var/lib/librespot is still 0775 and owned by the
+    retired librespot system user.
+
+ -- HiFiBerry <support@hifiberry.com>  Thu, 19 Nov 2026 12:00:00 +0000
 
 hifiberry-librespot (0.8.0.17) stable; urgency=medium
 

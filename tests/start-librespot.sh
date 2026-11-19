@@ -163,6 +163,32 @@ check "without persistence no cache is passed" not passed "--system-cache"
 OUTPUT=$(CACHED_CREDENTIALS="$WORK/elsewhere" SYSTEM_CACHE='' MOCK_ARGS="$WORK/args" MOCK_STDERR="$REJECTED" MOCK_STATUS=1 bash "$WRAPPER" 2>&1)
 check "the environment cannot point the filter at another file" not logged "moved them"
 
+# Credentials written by an older librespot are world readable; librespot
+# only sets 0600 on a file it creates.
+CACHE="$WORK/old-file"
+mkdir -p "$CACHE"
+echo '{"username":"test"}' > "$CACHE/credentials.json"
+chmod 644 "$CACHE/credentials.json"
+OUTPUT=$(SYSTEM_CACHE="$CACHE" MOCK_ARGS="$WORK/args" MOCK_STATUS=0 bash "$WRAPPER" 2>&1)
+check "an older world-readable credentials file is set to 0600" [ "$(stat -c %a "$CACHE/credentials.json")" = 600 ]
+
+# A device upgraded from 0.7.1.1 or earlier still has /var/lib/librespot
+# 0775 and owned by the retired librespot system user. Credentials do not
+# belong in a directory another user controls.
+CACHE="$WORK/foreign"
+mkdir -p "$CACHE"
+chown nobody "$CACHE"
+chmod 775 "$CACHE"
+OUTPUT=$(SYSTEM_CACHE="$CACHE" MOCK_ARGS="$WORK/args" MOCK_STATUS=0 bash "$WRAPPER" 2>&1)
+STATUS=$?
+check "a directory owned by another user is not passed" not passed "--system-cache"
+check "a directory owned by another user is logged" logged "belongs to nobody"
+check "librespot still starts without persistence" [ "$STATUS" -eq 0 ]
+
+CACHE="$WORK/missing/librespot"
+OUTPUT=$(SYSTEM_CACHE="$CACHE" MOCK_ARGS="$WORK/args" MOCK_STATUS=0 bash "$WRAPPER" 2>&1)
+check "a directory that does not exist yet is left to librespot" passed "--system-cache"
+
 rm -rf "$WORK"
 if [ "$FAILURES" -ne 0 ]; then
   echo "$FAILURES failure(s)"
