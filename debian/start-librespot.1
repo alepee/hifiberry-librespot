@@ -40,6 +40,13 @@ librespot creates the directory and writes
 readable by its owner only. A
 .I credentials.json
 written by an older version is set to 0600 on start.
+If the directory exists but belongs to another user \(em on a device
+upgraded from 0.7.1.1 or earlier
+.I /var/lib/librespot
+still belongs to the retired
+.B librespot
+system user \(em a warning is logged and the player starts without
+persistence.
 .IP
 When Spotify explicitly rejects the cached credentials (bad credentials,
 credentials that cannot be validated, or an account without Premium),

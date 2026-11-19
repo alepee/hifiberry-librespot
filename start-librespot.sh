@@ -4,8 +4,11 @@
 # This script handles startup of librespot with the system's pretty hostname
 # and auto-configures audio parameters based on the detected sound card
 #
-# Version: 1.1.5
+# Version: 1.1.6
 # Changelog:
+# - v1.1.6: Start without credential persistence when the cache directory
+#           belongs to another user, as on devices upgraded from 0.7.1.1 or
+#           earlier, instead of keeping credentials there.
 # - v1.1.5: Librespot now handles permissions of credentials file by itself.
 #           Old workaround with mkdir removed. If credentials.json exists, set
 #           it to 0600 to prevent librespot warnings.
@@ -151,12 +154,21 @@ LIBRESPOT_OPTS=("--name" "$PRETTY_HOSTNAME"
 # Persist credentials, so a restart does not depend on a client pushing them
 # back over zeroconf. librespot creates the directory and writes
 # credentials.json 0600, but a file from an older version is world readable.
+# A directory that belongs to another user is not used: on a device upgraded
+# from 0.7.1.1 or earlier /var/lib/librespot is still 0775 and owned by the
+# retired librespot system user, and credentials do not belong in a
+# directory another user controls. The player then starts without
+# persistence rather than not at all.
 CACHED_CREDENTIALS=""
 if [ -n "$SYSTEM_CACHE" ]; then
-  LIBRESPOT_OPTS+=("--system-cache" "$SYSTEM_CACHE")
-  CACHED_CREDENTIALS="$SYSTEM_CACHE/credentials.json"
-  if [ -f "$CACHED_CREDENTIALS" ]; then
-    chmod 600 "$CACHED_CREDENTIALS"
+  if [ -e "$SYSTEM_CACHE" ] && [ ! -O "$SYSTEM_CACHE" ]; then
+    echo "Warning: $SYSTEM_CACHE belongs to $(stat -c %U "$SYSTEM_CACHE"), not $(id -un), starting without credential persistence."
+  else
+    LIBRESPOT_OPTS+=("--system-cache" "$SYSTEM_CACHE")
+    CACHED_CREDENTIALS="$SYSTEM_CACHE/credentials.json"
+    if [ -f "$CACHED_CREDENTIALS" ]; then
+      chmod 600 "$CACHED_CREDENTIALS"
+    fi
   fi
 fi
 
