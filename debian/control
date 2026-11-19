@@ -2,6 +2,7 @@ Source: hifiberry-librespot
 Section: sound
 Priority: optional
 Maintainer: HiFiBerry <info@hifiberry.com>
+Uploaders: Eugeny Shcheglov <eugenyshcheglov@gmail.com>
 Build-Depends: debhelper-compat (= 13), 
                git,
                curl,
